@@ -1,3 +1,9 @@
+/* Chess.com cracker — (c) 2026 kerlk (https://t.me/kerlk)
+   Licensed under the Custom License v1.0+ (evergreen).
+   The current version of the license is always available at:
+   https://github.com/<nick>/<repo>/blob/main/LICENSE
+   Modification prohibited. See LICENSE for details. */
+
 const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
 const evalBarWhite = document.getElementById('eval-bar-white');
