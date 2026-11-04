@@ -1,3 +1,9 @@
+/* Chess.com cracker — (c) 2026 kerlk (https://t.me/kerlk)
+   Licensed under the Custom License v1.0+ (evergreen).
+   The current version of the license is always available at:
+   https://github.com/<nick>/<repo>/blob/main/LICENSE
+   Modification prohibited. See LICENSE for details. */
+
 let engines = [];
 let bestMoves = { 1: null, 2: null, 3: null };
 
