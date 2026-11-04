@@ -1,4 +1,3 @@
-```markdown
 # Chess.com cracker
 
 Расширение для анализа позиций и подсказки лучших ходов на chess.com.
@@ -37,4 +36,3 @@
 ## Автор
 
 [kerlk.t.me](https://t.me/kerlk)
-```
