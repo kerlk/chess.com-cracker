@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "Chess.com cracker",
+  "version": "1.0.0",
+  "description": "Оценка позиции и лучшие ходы.",
+  "permissions": ["storage", "offscreen"],
+  "host_permissions": ["https://www.chess.com/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.chess.com/play/*",
+        "https://www.chess.com/play",
+        "https://www.chess.com/game/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Chess.com cracker",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "engine/*",
+        "engine/stockfish-19.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  }
+}
