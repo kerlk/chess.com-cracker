@@ -5,13 +5,8 @@
 ---
 
 ## ⚠️ Важно
-
-**Использование разрешено исключительно против компьютерных ботов.**  
-Игра против живых людей с использованием этого расширения — прямое нарушение лицензии и правил chess.com.
-Перед использованием данного ПО Пользователь обязан ознакомиться с текстом лицензии!!!
-[LICENSE](https://github.com/kerlk/chess.com-cracker/blob/main/LICENSE). 
+Перед использованием данного ПО Пользователь обязан ознакомиться с текстом [лицензии](https://github.com/kerlk/chess.com-cracker/blob/main/LICENSE).
 ---
-
 ## Установка
 
 1. Скачайте или склонируйте репозиторий:
@@ -26,12 +21,5 @@
 
 ---
 
-## Лицензия
-
-[github.com/kerlk/chess.com-cracker/blob/main/LICENSE](https://github.com/kerlk/chess.com-cracker/blob/main/LICENSE)
-
----
-
 ## Автор
-
 [kerlk.t.me](https://t.me/kerlk)
