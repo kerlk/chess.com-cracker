@@ -42,8 +42,8 @@ chrome.action.onClicked.addListener(() => {
   chrome.windows.create({
     url: chrome.runtime.getURL('panel.html'),
     type: 'popup',
-    width: 400,
-    height: 500
+    width: 410,
+    height: 620
   });
 });
 
@@ -64,6 +64,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       chrome.runtime.sendMessage({
         type: 'START_ANALYSIS',
         fen: msg.payload.fen,
+        historyFens: msg.payload.historyFens || [],
         showArrows: cfg.showArrows
       }).catch(() => {});
     });
@@ -77,7 +78,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (data.lastPosition && data.lastPosition.fen) {
         chrome.runtime.sendMessage({
           type: 'START_ANALYSIS',
-          fen: data.lastPosition.fen
+          fen: data.lastPosition.fen,
+          historyFens: data.lastPosition.historyFens || []
         }).catch(() => {});
       }
     });
@@ -99,8 +101,25 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type === 'ENGINE_MULTI_MOVES') {
     chrome.runtime.sendMessage({ type: 'ENGINE_MULTI_MOVES', moves: msg.moves }).catch(() => {});
 
-    chrome.storage.local.get({ showArrows: true }, (data) => {
+    chrome.storage.local.get({ showArrows: true, selectedEngine: 'stockfish' }, (data) => {
       if (!data.showArrows) return;
+      if (data.selectedEngine !== 'stockfish') return;
+
+      chrome.tabs.query({ url: "https://www.chess.com/*" }, (tabs) => {
+        for (const tab of tabs) {
+          chrome.tabs.sendMessage(tab.id, { type: 'HIGHLIGHT_MULTI_MOVES', moves: msg.moves }).catch(() => {});
+        }
+      });
+    });
+    return;
+  }
+
+  if (msg?.type === 'MAIA_MOVES') {
+    chrome.runtime.sendMessage({ type: 'MAIA_MOVES', moves: msg.moves, winProbability: msg.winProbability }).catch(() => {});
+
+    chrome.storage.local.get({ showArrows: true, selectedEngine: 'stockfish' }, (data) => {
+      if (!data.showArrows) return;
+      if (data.selectedEngine !== 'maia') return;
 
       chrome.tabs.query({ url: "https://www.chess.com/*" }, (tabs) => {
         for (const tab of tabs) {
@@ -128,4 +147,5 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     });
     return;
   }
+
 });

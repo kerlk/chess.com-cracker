@@ -8,9 +8,28 @@ const boardEl = document.getElementById('board');
 const statusEl = document.getElementById('status');
 const evalBarWhite = document.getElementById('eval-bar-white');
 const toggleArrows = document.getElementById('toggle-arrows');
+const engineButtons = document.querySelectorAll('.engine-btn');
 
 let isCastlingDone = false;
+let selectedEngine = 'stockfish';
 const castlingBtn = document.getElementById('panel-castling-btn');
+
+function updateEngineUI() {
+  engineButtons.forEach(btn => {
+    const isActive = btn.dataset.engine === selectedEngine;
+    btn.classList.toggle('active', isActive);
+  });
+}
+
+engineButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedEngine = btn.dataset.engine;
+    chrome.storage.local.set({ selectedEngine });
+    updateEngineUI();
+    
+    chrome.runtime.sendMessage({ type: 'REQUEST_REANALYSIS' }).catch(() => {});
+  });
+});
 
 function showArrowsFromCheckbox(checked) {
   return !checked;
@@ -22,11 +41,13 @@ function updateCastlingVisibility() {
   castlingBtn.classList.toggle('hidden', showArrows);
 }
 
-chrome.storage.local.get({ showArrows: true, castlingDone: false }, (data) => {
+chrome.storage.local.get({ showArrows: true, castlingDone: false, selectedEngine: 'stockfish' }, (data) => {
   if (toggleArrows) toggleArrows.checked = !data.showArrows;
   isCastlingDone = data.castlingDone;
+  selectedEngine = data.selectedEngine;
   updateCastlingUI();
   updateCastlingVisibility();
+  updateEngineUI();
 });
 
 if (toggleArrows) {
@@ -67,6 +88,11 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
   if (changes.castlingDone) {
     isCastlingDone = changes.castlingDone.newValue;
     updateCastlingUI();
+  }
+
+  if (changes.selectedEngine) {
+    selectedEngine = changes.selectedEngine.newValue;
+    updateEngineUI();
   }
 });
 
@@ -163,13 +189,15 @@ function drawPanelArrows(moves) {
     };
   }
 
-  moves.forEach((move, idx) => {
+  const orderedMoves = [...moves].reverse();
+  orderedMoves.forEach((move, idx) => {
     if (idx >= 3 || !move || move.length < 4) return;
     const from = getXYFromDOM(move.substring(0, 2));
     const to = getXYFromDOM(move.substring(2, 4));
     if (!from || !to) return;
 
-    const style = styles[idx];
+    const originalIdx = moves.length - 1 - idx;
+    const style = styles[originalIdx];
     const arrowSize = cellSize * (idx === 0 ? 0.5 : 0.4);
     const angle = Math.atan2(to.y - from.y, to.x - from.x);
     const lineEnd = {
@@ -230,7 +258,18 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 
   if (msg?.type === 'ENGINE_MULTI_MOVES') {
-    drawPanelArrows(msg.moves);
+    if (selectedEngine === 'stockfish') {
+      drawPanelArrows(msg.moves);
+    }
+  }
+
+  if (msg?.type === 'MAIA_MOVES') {
+    if (selectedEngine === 'maia') {
+      drawPanelArrows(msg.moves);
+      if (statusEl && msg.winProbability !== undefined) {
+        statusEl.textContent = `Maia: ${(msg.winProbability * 100).toFixed(1)}%`;
+      }
+    }
   }
 });
 

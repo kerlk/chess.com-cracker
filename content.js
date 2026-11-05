@@ -61,6 +61,67 @@ function getPieceImages(board) {
   return images;
 }
 let castlingDone = false;
+let historyFens = [];
+let lastFen = null;
+
+// Detect the actual side-to-move from chess.com's clock UI,
+// not from board orientation (which only tells us the player's color).
+function detectSideToMove() {
+  // The clock of the player whose turn it is has an active/running state.
+  // Try multiple possible chess.com class names for the running clock.
+  const activeClockSelectors = [
+    '.clock-player-turn',
+    '.clock-running',
+    '.clock-component.clock-player-turn',
+    '.clock-component.running',
+    '.clock-component.clock-running',
+    '[data-cy="clock-running"]',
+    '.clock-player-turn .clock-component'
+  ];
+
+  for (const selector of activeClockSelectors) {
+    const activeClock = document.querySelector(selector);
+    if (!activeClock) continue;
+
+    // The active clock belongs to the player whose turn it is.
+    // Determine the color from the player row's position (top = black, bottom = white).
+    const playerRow = activeClock.closest('.player-component, #board-layout-player-top, #board-layout-player-bottom, .player-row-component');
+    if (playerRow) {
+      const id = playerRow.id || '';
+      const cls = playerRow.className || '';
+      if (id.includes('bottom') || /bottom/i.test(cls)) return 'w';
+      if (id.includes('top') || /top/i.test(cls)) return 'b';
+    }
+
+    // Fallback: check class names on the clock for color hints
+    const clockCls = activeClock.className || '';
+    if (/black/i.test(clockCls)) return 'b';
+    if (/white/i.test(clockCls)) return 'w';
+  }
+
+  // Fallback: determine side-to-move from the move list.
+  // White moves on odd plies (1st, 3rd, ...), black on even (2nd, 4th, ...).
+  // Count the total number of moves played from the move list DOM.
+  const moveList = document.querySelector('.move-list, [data-cy="move-list"], .main-line-row');
+  if (moveList) {
+    const moveNodes = moveList.querySelectorAll('[data-cy="move"], .move, .main-line-ply');
+    if (moveNodes.length > 0) {
+      // Total plies = number of moves. Even plies = black to move, odd = white.
+      return (moveNodes.length % 2 === 0) ? 'b' : 'w';
+    }
+  }
+
+  // Last resort: use board orientation. This is only correct when the
+  // player-to-move matches the bottom color, which is the common case
+  // for the player's own turn; otherwise the engine gets a wrong FEN.
+  const board = document.querySelector(SELECTOR_BOARD);
+  if (board) {
+    const flipped = board.classList.contains('flipped') || document.querySelector('.board.flipped') !== null;
+    return flipped ? 'b' : 'w';
+  }
+  return 'w';
+}
+
 function getCastlingRights(pieces) {
   if (castlingDone) return '-';
   const map = {};
@@ -94,6 +155,7 @@ function buildFen(pieces, sideToMove, castling) {
   }
   return `${rankLines.join('/')} ${sideToMove} ${castling} - 0 1`;
 }
+
 function readBoard() {
   const board = document.querySelector(SELECTOR_BOARD);
   if (!board) return null;
@@ -111,7 +173,19 @@ function readBoard() {
 function sendPosition() {
   const pos = readBoard();
   if (!pos || !isExtensionContextValid()) return;
-  safeSendMessage({ type: 'POSITION', payload: pos });
+
+  if (pos.fen !== lastFen) {
+    historyFens.push(lastFen || pos.fen);
+    if (historyFens.length > 8) {
+      historyFens.shift();
+    }
+    lastFen = pos.fen;
+  }
+
+  safeSendMessage({ 
+    type: 'POSITION', 
+    payload: { ...pos, historyFens: historyFens.filter(f => f && f !== pos.fen).slice(-7) }
+  });
 }
 function clearHighlights() {
   document.querySelectorAll('.cbr-overlay').forEach(el => el.remove());
@@ -178,9 +252,11 @@ function drawMultiArrows(board, moves) {
     { color: 'rgba(0, 150, 255, 0.8)', width: Math.max(3, w / 100) },
     { color: 'rgba(0, 200, 0, 0.7)', width: Math.max(2, w / 120) }
   ];
-  normalizedMoves.forEach((move, index) => {
+  const orderedMoves = [...normalizedMoves].reverse();
+  orderedMoves.forEach((move, index) => {
     if (index >= 3 || !move || move.length < 4) return;
-    drawOneArrow(svg, move.substring(0, 2), move.substring(2, 4), board, flipped, styles[index].color, styles[index].width, index === 0);
+    const originalIdx = normalizedMoves.length - 1 - index;
+    drawOneArrow(svg, move.substring(0, 2), move.substring(2, 4), board, flipped, styles[originalIdx].color, styles[originalIdx].width, originalIdx === 0);
   });
   const boardRect = board.getBoundingClientRect(), parentRect = board.parentElement.getBoundingClientRect();
   svg.style.left = `${boardRect.left - parentRect.left}px`; svg.style.top = `${boardRect.top - parentRect.top}px`;

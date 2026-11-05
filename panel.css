@@ -7,7 +7,6 @@ body {
   background: #302e2b;
   color: #eee;
   position: relative;
-  padding-left: 40px;
   padding-bottom: 45px;
 }
 
@@ -16,7 +15,6 @@ body {
   align-items: center;
   gap: 10px;
   padding: 12px;
-  margin-left: -40px;
   background: #262421;
   border-bottom: 1px solid #444;
 }
@@ -59,14 +57,100 @@ input:checked + .slider:before {
   font-size: 12px;
   color: #ccc;
 }
+
+.engine-selector {
+  padding: 10px 12px;
+  background: #262421;
+  border-bottom: 1px solid #444;
+}
+
+.engine-label {
+  display: block;
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.engine-options {
+  display: flex;
+  gap: 8px;
+}
+
+.engine-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #3a3734;
+  border: 2px solid #4a4744;
+  border-radius: 8px;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+}
+
+.engine-btn:hover {
+  background: #45423f;
+  border-color: #5a5754;
+  color: #fff;
+}
+
+.engine-btn.active {
+  background: #4a4744;
+  border-color: #81B64C;
+  color: #fff;
+  box-shadow: 0 0 12px rgba(129, 182, 76, 0.3);
+}
+
+.engine-icon {
+  font-size: 18px;
+}
+
+.engine-icon-img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.engine-name {
+  font-weight: 600;
+}
+
+.engine-badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #555;
+  color: #ddd;
+}
+
+.engine-btn.active .engine-badge {
+  background: #81B64C;
+  color: #fff;
+}
+.board-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0;
+}
 .board {
   width: 320px;
   height: 320px;
-  margin: 10px auto;
+  margin: 0;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   grid-template-rows: repeat(8, 1fr);
   position: relative;
+  flex-shrink: 0;
 }
 .sq {
   position: relative;
@@ -97,9 +181,6 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 .eval-bar-container {
-  position: absolute;
-  left: 10px;
-  top: 55px;
   width: 16px;
   height: 320px;
   background: #333;
@@ -108,7 +189,7 @@ input:checked + .slider:before {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  z-index: 10;
+  flex-shrink: 0;
 }
 .eval-bar-white {
   background: #fff;

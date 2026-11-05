@@ -5,7 +5,7 @@
   "description": "Оценка позиции и лучшие ходы.",
   "permissions": ["storage", "offscreen"],
   "host_permissions": ["https://www.chess.com/*"],
-  "background": { "service_worker": "background.js" },
+  "background": { "service_worker": "background.js", "type": "module" },
   "content_scripts": [
     {
       "matches": [
@@ -36,7 +36,9 @@
     {
       "resources": [
         "engine/*",
-        "engine/stockfish-19.js"
+        "engine/stockfish-19.js",
+        "engine/maia3/**",
+        "engine/onnxruntime-web/**"
       ],
       "matches": ["<all_urls>"]
     }

@@ -13,11 +13,29 @@
     <span class="toggle-label">Режим стримера</span>
   </div>
 
-  <div class="eval-bar-container">
-    <div id="eval-bar-white" class="eval-bar-white"></div>
-    <div id="eval-bar-black" class="eval-bar-black"></div>
+  <div class="engine-selector">
+    <span class="engine-label">Движок для подсказок:</span>
+    <div class="engine-options">
+      <button class="engine-btn active" data-engine="stockfish">
+        <img class="engine-icon-img" src="engine/Stockfish.png" alt="Stockfish">
+        <span class="engine-name">Stockfish</span>
+        <span class="engine-badge">Точный</span>
+      </button>
+      <button class="engine-btn" data-engine="maia">
+        <span class="engine-icon">🧠</span>
+        <span class="engine-name">Maia</span>
+        <span class="engine-badge">Человечный</span>
+      </button>
+    </div>
   </div>
-  <div id="board" class="board"></div>
+
+  <div class="board-row">
+    <div class="eval-bar-container">
+      <div id="eval-bar-white" class="eval-bar-white"></div>
+      <div id="eval-bar-black" class="eval-bar-black"></div>
+    </div>
+    <div id="board" class="board"></div>
+  </div>
   <div class="status-row">
     <span id="status" class="status">Ожидание доски…</span>
     <button id="panel-castling-btn">Рокировка сделана</button>
