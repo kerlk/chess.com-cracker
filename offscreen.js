@@ -98,6 +98,12 @@ async function initMaia() {
     if (maiaAttempts >= 2) {
       maiaFailed = true;
     }
+    setTimeout(() => {
+      maiaReady = false;
+      maiaLoading = false;
+      maiaFailed = false;
+      maiaAttempts = 0;
+    }, 1000);
   } finally {
     maiaLoading = false;
   }
@@ -125,6 +131,10 @@ async function analyzeWithMaia(fen, historyFens = []) {
     }).catch(() => {});
   } catch (e) {
     console.error('[Maia3] Analysis error:', e);
+    maiaReady = false;
+    maiaFailed = false;
+    maiaAttempts = 0;
+    setTimeout(() => initMaia(), 1000);
   }
 }
 
@@ -136,17 +146,19 @@ chrome.runtime.onMessage.addListener((msg) => {
       engines[0].postMessage('go depth 15');
     }
     if (engines[1]) {
+      const hintFen = msg.playerFen || msg.fen;
       engines[1].postMessage('stop');
-      engines[1].postMessage(`position fen ${msg.fen}`);
+      engines[1].postMessage(`position fen ${hintFen}`);
       engines[1].postMessage('go depth 12');
     }
 
+    const maiaFen = msg.playerFen || msg.fen;
     if (maiaReady) {
-      analyzeWithMaia(msg.fen, msg.historyFens || []);
+      analyzeWithMaia(maiaFen, msg.historyFens || []);
     } else if (!maiaLoading && !maiaFailed) {
       initMaia().then(() => {
         if (maiaReady) {
-          analyzeWithMaia(msg.fen, msg.historyFens || []);
+          analyzeWithMaia(maiaFen, msg.historyFens || []);
         }
       });
     }

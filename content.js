@@ -64,11 +64,7 @@ let castlingDone = false;
 let historyFens = [];
 let lastFen = null;
 
-// Detect the actual side-to-move from chess.com's clock UI,
-// not from board orientation (which only tells us the player's color).
 function detectSideToMove() {
-  // The clock of the player whose turn it is has an active/running state.
-  // Try multiple possible chess.com class names for the running clock.
   const activeClockSelectors = [
     '.clock-player-turn',
     '.clock-running',
@@ -82,9 +78,6 @@ function detectSideToMove() {
   for (const selector of activeClockSelectors) {
     const activeClock = document.querySelector(selector);
     if (!activeClock) continue;
-
-    // The active clock belongs to the player whose turn it is.
-    // Determine the color from the player row's position (top = black, bottom = white).
     const playerRow = activeClock.closest('.player-component, #board-layout-player-top, #board-layout-player-bottom, .player-row-component');
     if (playerRow) {
       const id = playerRow.id || '';
@@ -92,28 +85,17 @@ function detectSideToMove() {
       if (id.includes('bottom') || /bottom/i.test(cls)) return 'w';
       if (id.includes('top') || /top/i.test(cls)) return 'b';
     }
-
-    // Fallback: check class names on the clock for color hints
     const clockCls = activeClock.className || '';
     if (/black/i.test(clockCls)) return 'b';
     if (/white/i.test(clockCls)) return 'w';
   }
-
-  // Fallback: determine side-to-move from the move list.
-  // White moves on odd plies (1st, 3rd, ...), black on even (2nd, 4th, ...).
-  // Count the total number of moves played from the move list DOM.
   const moveList = document.querySelector('.move-list, [data-cy="move-list"], .main-line-row');
   if (moveList) {
     const moveNodes = moveList.querySelectorAll('[data-cy="move"], .move, .main-line-ply');
     if (moveNodes.length > 0) {
-      // Total plies = number of moves. Even plies = black to move, odd = white.
       return (moveNodes.length % 2 === 0) ? 'b' : 'w';
     }
   }
-
-  // Last resort: use board orientation. This is only correct when the
-  // player-to-move matches the bottom color, which is the common case
-  // for the player's own turn; otherwise the engine gets a wrong FEN.
   const board = document.querySelector(SELECTOR_BOARD);
   if (board) {
     const flipped = board.classList.contains('flipped') || document.querySelector('.board.flipped') !== null;
@@ -161,16 +143,46 @@ function readBoard() {
   if (!board) return null;
   const pieces = parsePieces(board);
   const flipped = board.classList.contains('flipped') || document.querySelector('.board.flipped') !== null;
-  const sideToMove = flipped ? 'b' : 'w';
+  const trackerSide = window.chessMoveTracker?.getSideToMove?.();
+  const sideToMove = trackerSide || (flipped ? 'b' : 'w');
   return {
     pieces,
     flipped,
+    playerColor: flipped ? 'b' : 'w',
     images: getPieceImages(board),
     fen: buildFen(pieces, sideToMove, getCastlingRights(pieces)),
     ts: Date.now()
   };
 }
+function autoDetectCastling() {
+  if (castlingDone) return;
+  const tracker = window.chessMoveTracker;
+  if (!tracker) return;
+  const st = tracker.getState();
+  if (!st || !st.lastMoveWasCastling || !st.playerColor) return;
+  if (st.lastMoveColor === st.playerColor) {
+    castlingDone = true;
+    safeStorageSet({ castlingDone });
+    const btn = document.querySelector('.cbr-castling-btn');
+    if (btn) updateCastlingButton(btn);
+  }
+}
+
+function detectNewGame() {
+  const moveList = document.querySelector('wc-simple-move-list');
+  if (!moveList) return;
+  const moves = moveList.querySelectorAll('[data-node]');
+  if (moves.length === 0 && castlingDone) {
+    castlingDone = false;
+    safeStorageSet({ castlingDone: false });
+    const btn = document.querySelector('.cbr-castling-btn');
+    if (btn) updateCastlingButton(btn);
+  }
+}
+
 function sendPosition() {
+  autoDetectCastling();
+  detectNewGame();
   const pos = readBoard();
   if (!pos || !isExtensionContextValid()) return;
 
@@ -182,9 +194,11 @@ function sendPosition() {
     lastFen = pos.fen;
   }
 
+  const playerFen = pos.fen.replace(/ (w|b) /, ` ${pos.playerColor} `);
+
   safeSendMessage({ 
     type: 'POSITION', 
-    payload: { ...pos, historyFens: historyFens.filter(f => f && f !== pos.fen).slice(-7) }
+    payload: { ...pos, playerFen, historyFens: historyFens.filter(f => f && f !== pos.fen).slice(-7) }
   });
 }
 function clearHighlights() {
@@ -240,7 +254,10 @@ function normalizeMove(move, sideToMove) {
 
 function drawMultiArrows(board, moves) {
   const flipped = board.classList.contains('flipped') || document.querySelector('.board.flipped') !== null;
-  const sideToMove = flipped ? 'b' : 'w';
+  const playerColor = flipped ? 'b' : 'w';
+  const trackerSide = window.chessMoveTracker?.getSideToMove?.();
+  const sideToMove = trackerSide || playerColor;
+
   const normalizedMoves = moves.map(m => normalizeMove(m, sideToMove));
   const w = board.clientWidth, h = board.clientHeight;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -514,6 +531,8 @@ window.addEventListener('focus', sendPosition);
 safeStorageGet({ castlingDone: false }, (data) => {
   castlingDone = data.castlingDone;
 });
+
+
 if (isExtensionContextValid()) {
   try {
     chrome.storage.onChanged.addListener((changes, namespace) => {

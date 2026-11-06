@@ -64,6 +64,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       chrome.runtime.sendMessage({
         type: 'START_ANALYSIS',
         fen: msg.payload.fen,
+        playerFen: msg.payload.playerFen || msg.payload.fen,
         historyFens: msg.payload.historyFens || [],
         showArrows: cfg.showArrows
       }).catch(() => {});
@@ -79,6 +80,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         chrome.runtime.sendMessage({
           type: 'START_ANALYSIS',
           fen: data.lastPosition.fen,
+          playerFen: data.lastPosition.playerFen || data.lastPosition.fen,
           historyFens: data.lastPosition.historyFens || []
         }).catch(() => {});
       }

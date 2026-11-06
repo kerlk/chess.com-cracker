@@ -226,9 +226,11 @@ function drawPanelArrows(moves) {
 }
 
 let currentFen = null;
+let currentPos = null;
 
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.type === 'POSITION_UPDATE') {
+    currentPos = msg.payload;
     render(msg.payload);
     if (msg.payload && msg.payload.fen) {
       currentFen = msg.payload.fen;
@@ -279,6 +281,7 @@ chrome.runtime.sendMessage({ type: 'GET_POSITION' }, (pos) => {
     return;
   }
   if (pos) {
+    currentPos = pos;
     render(pos);
     currentFen = pos.fen;
   }
