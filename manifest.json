@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Chess.com cracker",
-  "version": "1.0.3 beta",
+  "version": "1.0.3",
   "description": "Оценка позиции и лучшие ходы.",
   "permissions": ["storage", "offscreen"],
   "host_permissions": ["https://www.chess.com/*"],
