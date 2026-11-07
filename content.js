@@ -121,11 +121,20 @@ function getCastlingRights(pieces) {
   }
   return rights || '-';
 }
-function isValidPosition(pieces) {
+function hasKings(pieces) {
   if (!pieces || pieces.length < 2) return false;
   const hasWhiteKing = pieces.some(p => p.piece === 'wk');
   const hasBlackKing = pieces.some(p => p.piece === 'bk');
   return hasWhiteKing && hasBlackKing;
+}
+
+function hasPawnOnEdge(pieces) {
+  for (const { piece, square } of pieces) {
+    if (piece[1] !== 'p') continue;
+    const rank = parseInt(square[1], 10);
+    if (rank === 1 || rank === 8) return true;
+  }
+  return false;
 }
 
 function buildFen(pieces, sideToMove, castling) {
@@ -152,7 +161,11 @@ function readBoard() {
   if (!board) return null;
   let pieces = parsePieces(board);
 
-  if (!isValidPosition(pieces)) {
+  if (hasPawnOnEdge(pieces)) {
+    return null;
+  }
+
+  if (!hasKings(pieces)) {
     if (lastValidPieces) {
       pieces = lastValidPieces;
     } else {
