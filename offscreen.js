@@ -130,7 +130,6 @@ async function analyzeWithMaia(fen, historyFens = []) {
       winProbability: result.winProbability 
     }).catch(() => {});
   } catch (e) {
-    console.error('[Maia3] Analysis error:', e);
     maiaReady = false;
     maiaFailed = false;
     maiaAttempts = 0;

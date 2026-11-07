@@ -63,6 +63,8 @@ function getPieceImages(board) {
 let castlingDone = false;
 let historyFens = [];
 let lastFen = null;
+let lastValidPieces = null;
+let lastValidFen = null;
 
 function detectSideToMove() {
   const activeClockSelectors = [
@@ -119,6 +121,13 @@ function getCastlingRights(pieces) {
   }
   return rights || '-';
 }
+function isValidPosition(pieces) {
+  if (!pieces || pieces.length < 2) return false;
+  const hasWhiteKing = pieces.some(p => p.piece === 'wk');
+  const hasBlackKing = pieces.some(p => p.piece === 'bk');
+  return hasWhiteKing && hasBlackKing;
+}
+
 function buildFen(pieces, sideToMove, castling) {
   const map = {};
   for (const { piece, square } of pieces) map[square] = piece;
@@ -141,16 +150,46 @@ function buildFen(pieces, sideToMove, castling) {
 function readBoard() {
   const board = document.querySelector(SELECTOR_BOARD);
   if (!board) return null;
-  const pieces = parsePieces(board);
+  let pieces = parsePieces(board);
+
+  if (!isValidPosition(pieces)) {
+    if (lastValidPieces) {
+      pieces = lastValidPieces;
+    } else {
+      return null;
+    }
+  } else {
+    lastValidPieces = pieces;
+  }
+
   const flipped = board.classList.contains('flipped') || document.querySelector('.board.flipped') !== null;
   const trackerSide = window.chessMoveTracker?.getSideToMove?.();
   const sideToMove = trackerSide || (flipped ? 'b' : 'w');
+
+  const fen = buildFen(pieces, sideToMove, getCastlingRights(pieces));
+  const fenBoard = fen.split(' ')[0];
+  if (!/K/.test(fenBoard) || !/k/.test(fenBoard)) {
+    if (lastValidFen) {
+      return {
+        pieces: lastValidPieces,
+        flipped,
+        playerColor: flipped ? 'b' : 'w',
+        images: getPieceImages(board),
+        fen: lastValidFen,
+        ts: Date.now()
+      };
+    }
+    return null;
+  }
+
+  lastValidFen = fen;
+
   return {
     pieces,
     flipped,
     playerColor: flipped ? 'b' : 'w',
     images: getPieceImages(board),
-    fen: buildFen(pieces, sideToMove, getCastlingRights(pieces)),
+    fen,
     ts: Date.now()
   };
 }
@@ -177,6 +216,12 @@ function detectNewGame() {
     safeStorageSet({ castlingDone: false });
     const btn = document.querySelector('.cbr-castling-btn');
     if (btn) updateCastlingButton(btn);
+  }
+  if (moves.length === 0) {
+    lastValidPieces = null;
+    lastValidFen = null;
+    historyFens = [];
+    lastFen = null;
   }
 }
 
